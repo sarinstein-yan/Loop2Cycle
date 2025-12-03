@@ -59,7 +59,14 @@ class DualCycleAnalyzer:
     def cluster_spectrum(self, n_clusters: int = 3) -> np.ndarray:
         self.n_clusters = int(n_clusters)
         self._mi_cache.clear()
-        r = np.abs(self.evals).reshape(-1, 1)
+
+        # r = np.abs(self.evals).reshape(-1, 1)
+        re = self.evals.real
+        im = self.evals.imag
+        re /= np.max(np.abs(re)) if np.max(np.abs(re)) > 0 else 1.0
+        im /= np.max(np.abs(im)) if np.max(np.abs(im)) > 0 else 1.0
+        r = np.abs(re + 1j * im).reshape(-1, 1)
+        
         self.labels = KMeans(n_clusters=self.n_clusters, n_init=10, random_state=42).fit_predict(r)
         return self.labels
 
