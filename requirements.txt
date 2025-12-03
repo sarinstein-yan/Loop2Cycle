@@ -6,6 +6,7 @@ scipy
 scikit-learn
 tqdm
 joblib
-streamlit
 Ipython
 ipywidgets
+streamlit
+streamlit_mermaid
