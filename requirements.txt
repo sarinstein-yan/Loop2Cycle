@@ -7,3 +7,5 @@ scikit-learn
 tqdm
 joblib
 streamlit
+Ipython
+ipywidgets
