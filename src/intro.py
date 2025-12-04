@@ -267,7 +267,7 @@ graph TD
     Cycles --> MI["Compute 'atomic' \n mutual information \n I(X(C); Y)"]
     MI --> NMI["Rank cycles by NMI_ℓ(C)"]
     NMI --> MIPlot{{Plot: top NMI cycle C_topk}}
-    LoopPlot -. "Physical Correspondence" .-> WeightPlot
+    LoopPlot <-. "Physical Correspondence" .-> WeightPlot
     WeightPlot <-. "Computational Correspondence \nand Visual Match" .-> MIPlot
     linkStyle 10 stroke:#8b0000, stroke-width:3px
     linkStyle 11 stroke:#8b0000, stroke-width:3px 

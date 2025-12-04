@@ -27,6 +27,11 @@ class DualCycleAnalyzer:
         self.VL /= vl_norms
         self.VR /= vr_norms
 
+        order = np.lexsort((np.abs(self.evals), np.angle(self.evals)))
+        self.evals = self.evals[order]
+        self.VL = self.VL[:, order]
+        self.VR = self.VR[:, order]
+
         self.DiG = nx.from_numpy_array(self.H, create_using=nx.DiGraph)
         self.G = self.DiG.to_undirected()
 

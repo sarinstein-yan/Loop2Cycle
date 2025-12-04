@@ -38,15 +38,15 @@ def _get_ui_defaults_for_loop(
     """Return (cycle_length, mi_rank) defaults for a given spectral loop label.
 
     Hard-coded special cases:
-      - loop label 0 -> L = 88, NMI rank = 1
+      - loop label 1 -> L = 88, NMI rank = 1
       - loop label 2 -> L = 32, NMI rank = 2
 
     For any other label, fall back to using the loop size (number of
     eigenvalues in the cluster) as the cycle length and NMI rank = 1.
     """
-    if loop_label == 0:
-        return 88, 1
     if loop_label == 2:
+        return 88, 1
+    if loop_label == 0:
         return 32, 2
 
     cluster_size = int((labels_full == loop_label).sum())
@@ -60,7 +60,10 @@ def _get_ui_defaults_for_loop(
 def _load_or_build_nmi_cache(analyzer: DualCycleAnalyzer) -> None:
     """Attach precomputed NMI cache to `analyzer`.
 
-    If a compatible cache exists (same Hamiltonian digest & k), it is loaded.
+    If a compatible cache exists (same Hamiltonian digest & k), it is loaded,
+    including the eigensystem (evals, VL, VR) so that cached labels / MI
+    remain aligned with eigenvalues across machines.
+
     Otherwise, NMI cycles are computed once for k=3 and written to disk.
 
     The smallest-count cluster (isolated eigenvalues) is ignored in the cache.
@@ -82,7 +85,13 @@ def _load_or_build_nmi_cache(analyzer: DualCycleAnalyzer) -> None:
                 and int(payload.get("n_clusters", -1)) == N_CLUSTERS_FIXED
                 and "labels" in payload
                 and "mi_cache" in payload
+                and "evals" in payload
+                and "VL" in payload
+                and "VR" in payload
             ):
+                analyzer.evals = np.array(payload["evals"])
+                analyzer.VL = np.array(payload["VL"])
+                analyzer.VR = np.array(payload["VR"])
                 analyzer.labels = np.array(payload["labels"])
                 analyzer.n_clusters = N_CLUSTERS_FIXED
                 analyzer._mi_cache = payload["mi_cache"]
@@ -97,6 +106,12 @@ def _load_or_build_nmi_cache(analyzer: DualCycleAnalyzer) -> None:
                     payload.get("max_cycle_length", MAX_CYCLE_LENGTH)
                 )
                 return
+            else:
+                # Old-format or incompatible cache: fall through to recompute
+                print(
+                    f"Cache at {CACHE_PATH} is incompatible or missing eigensystem; "
+                    "recomputing NMI cache."
+                )
         except Exception as e:
             print(f"Warning: failed to load cache at {CACHE_PATH}: {e}")
 
@@ -123,6 +138,9 @@ def _load_or_build_nmi_cache(analyzer: DualCycleAnalyzer) -> None:
         "mi_cache": analyzer._mi_cache,
         "ignored_cluster": ignored_cluster,
         "max_cycle_length": MAX_CYCLE_LENGTH,
+        "evals": analyzer.evals,
+        "VL": analyzer.VL,
+        "VR": analyzer.VR,
     }
 
     with open(CACHE_PATH, "wb") as f:
